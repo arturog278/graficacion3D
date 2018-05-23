@@ -8,7 +8,6 @@
 #include <GL/glut.h>
 #endif
 
-static float rotar=0;
 GLfloat angle = 0;
 GLfloat angle2 = 0;
 int moving, startx, starty,caer=0;
@@ -16,7 +15,7 @@ int transx =0,transy=0,vacio=0,azul=0,rojo=0;
 static GLdouble tamanio = 6.0;
 static GLfloat posicionLuz[6];
 float c=1;
-float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,x2=0,y2=0,angr,paso=2.622222222;  //variables camara y objetivo
+float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,paso=2.622222222;  //variables camara y objetivo
 float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,t=0;//objeto colision
 
 float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
@@ -30,8 +29,6 @@ int posxmat2 = 16, posymat2 = 1;
 enum {X, Y, Z, W};
 enum {A, B, C, D};
 
-
-static GLfloat colorLuz[] = {1, 1, 1, 1.0};
 
 static GLfloat planoPiso[4];
 static GLfloat sombraPiso[4][4];
@@ -473,8 +470,18 @@ key(unsigned char c, int x, int y)
             checarColisiones(0,-1);                   //revisar colision conra movil
 
         }
+        glutPostRedisplay();
+    }else{
         if (c == 'r') {
             xmov=0;ymov=0;down=tamanio,caer=0;
+            xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0;
+            xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
+            gameOver = 0;
+            time = 60;
+            posxmat1 = 1, posymat1 = 16;
+            posxmat2 = 16, posymat2 = 1;
+            initMatriz();
+            glutTimerFunc(1000, temp, 1);
         }
         glutPostRedisplay();
     }
@@ -489,7 +496,8 @@ void spkey(int key,int x, int y){
                 if (yobj2<=abajo)checarColisiones2(0,1);
                 break;
             case GLUT_KEY_LEFT:
-                if (xobj2>=izquierda)checarColisiones2(-1,0);            break;
+                if (xobj2>=izquierda)checarColisiones2(-1,0);
+                break;
             case GLUT_KEY_RIGHT:
                  if (xobj2<=derecha)checarColisiones2(1,0);
                 break;
