@@ -27,6 +27,14 @@ float time = 60;
 
 int posxmat1 = 0, posymat1 = 15;
 int posxmat2 = 15, posymat2 = 0;
+enum {X, Y, Z, W};
+enum {A, B, C, D};
+
+
+static GLfloat colorLuz[] = {1, 1, 1, 1.0};
+
+static GLfloat planoPiso[4];
+static GLfloat sombraPiso[4][4];
 
 void initMatriz(){
     for(int i=0;i<16;i++){
@@ -35,6 +43,12 @@ void initMatriz(){
         }
     }
 }
+static GLfloat verticesPiso[4][3] = {
+    { -64.0, 0.0,  64.0 },
+    {  64.0, 0.0,  64.0 },
+    {  64.0, 0.0, -64.0 },
+    { -64.0, 0.0, -64.0 },
+};
 
 
 char *textura[] = {
@@ -55,6 +69,57 @@ char *textura[] = {
     "o..............o",
     "oooooooooooooooo",
 };
+void shadowMatrix(float matrizSombra[4][4],
+                  float ecPlano[4],
+                  float posLuz[4])
+{
+    GLfloat dot;
+    // Producto punto entre vector light position y la normal de ground plane
+    dot = ecPlano[X] * posLuz[X] +
+    ecPlano[Y] * posLuz[Y] +
+    ecPlano[Z] * posLuz[Z] +
+    ecPlano[W] * posLuz[W];
+    
+    matrizSombra[0][0] = dot - posLuz[X] * ecPlano[X];
+    matrizSombra[1][0] = 0.f - posLuz[X] * ecPlano[Y];
+    matrizSombra[2][0] = 0.f - posLuz[X] * ecPlano[Z];
+    matrizSombra[3][0] = 0.f - posLuz[X] * ecPlano[W];
+    
+    matrizSombra[X][1] = 0.f - posLuz[Y] * ecPlano[X];
+    matrizSombra[1][1] = dot - posLuz[Y] * ecPlano[Y];
+    matrizSombra[2][1] = 0.f - posLuz[Y] * ecPlano[Z];
+    matrizSombra[3][1] = 0.f - posLuz[Y] * ecPlano[W];
+    
+    matrizSombra[X][2] = 0.f - posLuz[Z] * ecPlano[X];
+    matrizSombra[1][2] = 0.f - posLuz[Z] * ecPlano[Y];
+    matrizSombra[2][2] = dot - posLuz[Z] * ecPlano[Z];
+    matrizSombra[3][2] = 0.f - posLuz[Z] * ecPlano[W];
+    
+    matrizSombra[X][3] = 0.f - posLuz[W] * ecPlano[X];
+    matrizSombra[1][3] = 0.f - posLuz[W] * ecPlano[Y];
+    matrizSombra[2][3] = 0.f - posLuz[W] * ecPlano[Z];
+    matrizSombra[3][3] = dot - posLuz[W] * ecPlano[W];
+    
+}
+void defPlano(float plano[4], float v0[3], float v1[3], float v2[3])
+{
+    GLfloat vec0[3], vec1[3];
+    /* Producto cruz entre 2 vectores. */
+    vec0[X] = v1[X] - v0[X];
+    vec0[Y] = v1[Y] - v0[Y];
+    vec0[Z] = v1[Z] - v0[Z];
+    
+    vec1[X] = v2[X] - v0[X];
+    vec1[Y] = v2[Y] - v0[Y];
+    vec1[Z] = v2[Z] - v0[Z];
+    
+    /* Encontrar producto cruz para A, B, y C en la ec. del plano */
+    plano[A] = vec0[Y] * vec1[Z] - vec0[Z] * vec1[Y];
+    plano[B] = -(vec0[X] * vec1[Z] - vec0[Z] * vec1[X]);
+    plano[C] = vec0[X] * vec1[Y] - vec0[Y] * vec1[X];
+    
+    plano[D] = -(plano[A] * v0[X] + plano[B] * v0[Y] + plano[C] * v0[Z]);
+}
 
 void texturaPiso(int num)
 {
@@ -248,9 +313,14 @@ void puntaje(void){
 
 void display(void)
 {
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    
 
+    
+    shadowMatrix(sombraPiso, planoPiso, posicionLuz);
+
+
+  
     glPushMatrix();
     glRotatef(0/4, 1, 0, 0);  //rotar arriba/abajo con mouse
 
@@ -263,6 +333,45 @@ void display(void)
               0,0,0,              // Hacia donde ve (objetivo)
               0,1,0);               // Eje de rotacion
 
+
+
+    
+    glLightfv(GL_LIGHT0, GL_POSITION, posicionLuz);//Reacomodar la luz
+    
+    //*************************************************************
+    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0, 1.0, 1.0, 0.6);
+    drawFloor();
+    
+    
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glPushMatrix();
+    glColor4f(0.0, 0.0, 0.0, 0.2);
+    glMultMatrixf((GLfloat *) sombraPiso);
+    //Sombra
+    glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
+    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
+    dibujaObjeto();
+    glPopMatrix();
+    
+    glPushMatrix();
+    glColor4f(0.0, 0.0, 0.0, 0.2);
+    glMultMatrixf((GLfloat *) sombraPiso);
+    //Sombra
+    glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
+    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
+    dibujaObjeto2();
+    glPopMatrix();
+    
+    
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    
+    //dibujo objeto solito
     glPushMatrix();
     glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
     glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
@@ -274,12 +383,14 @@ void display(void)
     glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
     dibujaObjeto2();             //cubo
     glPopMatrix();
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE_MINUS_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-    glColor4f(1, 1, 1,0.5);
-    drawFloor();
-    glDisable(GL_BLEND);
+    
+    glDisable(GL_LIGHTING);
+    glColor3f(1.0, 1.0, 0.7);
+    glTranslatef(posicionLuz[0], posicionLuz[1], posicionLuz[2]);
+    glEnable(GL_LIGHTING);
+    
+    glPopMatrix();
+    
 
     glPopMatrix();
 
@@ -393,14 +504,15 @@ void init(void){
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHTING);
 
-    posicionLuz[0] = 12;
-    posicionLuz[1] = 15;
+    posicionLuz[0] = 0;
+    posicionLuz[1] = 70;
     posicionLuz[2] = 0;
     posicionLuz[3] = 0.8;//luz posicional o direccional
     glLightfv(GL_LIGHT0, GL_POSITION, posicionLuz); /*light position. */
     texturaPiso(0);
     glClearColor(1, 1, 1, 1);
     glLineWidth(2);
+    defPlano(planoPiso, verticesPiso[1], verticesPiso[2], verticesPiso[3]);//Plano para sombra}
 }
 
 int main(int argc, char **argv)
