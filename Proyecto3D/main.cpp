@@ -16,17 +16,17 @@ int transx =0,transy=0,vacio=0,azul=0,rojo=0;
 static GLdouble tamanio = 6.0;
 static GLfloat posicionLuz[6];
 float c=1;
-float xobj1=-59,yobj1=62,xpant1=0,ypant1=0,x2=0,y2=0,angr,paso=2.622222222;  //variables camara y objetivo
+float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,x2=0,y2=0,angr,paso=2.622222222;  //variables camara y objetivo
 float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,t=0;//objeto colision
 
-float xobj2=59,yobj2=-56,xpant2=0,ypant2=0;
+float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
 
-int colored[16][16];
+int colored[18][18];
 int gameOver = 0;
 float time = 60;
-
-int posxmat1 = 0, posymat1 = 15;
-int posxmat2 = 15, posymat2 = 0;
+float izquierda=-50.0,derecha=60.0,arriba=-48.0,abajo=65.0;
+int posxmat1 = 1, posymat1 = 16;
+int posxmat2 = 16, posymat2 = 1;
 enum {X, Y, Z, W};
 enum {A, B, C, D};
 
@@ -37,11 +37,13 @@ static GLfloat planoPiso[4];
 static GLfloat sombraPiso[4][4];
 
 void initMatriz(){
-    for(int i=0;i<16;i++){
-        for(int y=0;y<16;y++){
+    for(int i=0;i<18;i++){
+        for(int y=0;y<18;y++){
             colored[i][y]=0;
         }
     }
+    colored[1][16]=1;
+    colored[16][1]=2;
 }
 static GLfloat verticesPiso[4][3] = {
     { -64.0, 0.0,  64.0 },
@@ -147,18 +149,18 @@ void texturaPiso(int num)
                     col[0] =0;
                     col[1] =0;
                     col[2] =255;
-                }else
-                {
-                    if(num==2){
+                }else if(num==2){
                     col[0] =255;
                     col[1] =0;
                     col[2] =0;
-                }
-                    else{
-                        col[0] =255;
-                        col[1] =255;
-                        col[2] =255;
-                    }
+                }else if(num==3){
+                    col[0] =128;
+                    col[1] =128;
+                    col[2] =128;
+                }else{
+                    col[0] =255;
+                    col[1] =255;
+                    col[2] =255;
                 }
 
             }
@@ -209,14 +211,18 @@ void dibujaObjeto2(void)
 
 void drawFloor(void)
 {
-    for(int i=0;i<16;i++){
-        for(int j=0;j<16;j++){
-            if(colored[i][j]==0){
-                texturaPiso(0);
-            }else if(colored[i][j]==1){
-                texturaPiso(1);
-            }else if(colored[i][j]==2){
-                texturaPiso(2);
+    for(int i=0;i<18;i++){
+        for(int j=0;j<18;j++){
+            if(i==0||j==0||i==17||j==17){
+                texturaPiso(3);
+            }else{
+                if(colored[i][j]==0){
+                    texturaPiso(0);
+                }else if(colored[i][j]==1){
+                    texturaPiso(1);
+                }else if(colored[i][j]==2){
+                    texturaPiso(2);
+                }
             }
             glDisable(GL_LIGHTING);
             glEnable(GL_TEXTURE_2D);
@@ -302,8 +308,8 @@ void puntaje(void){
     vacio=0;
     rojo=0;
     azul=0;
-    for(int i=0;i<16;i++){
-        for(int y=0;y<16;y++){
+    for(int i=0;i<18;i++){
+        for(int y=0;y<18;y++){
             if(colored[i][y]==0)vacio++;
             if(colored[i][y]==1)azul++;
             if(colored[i][y]==2)rojo++;
@@ -323,16 +329,10 @@ void display(void)
   
     glPushMatrix();
     glRotatef(0/4, 1, 0, 0);  //rotar arriba/abajo con mouse
-
-    angr=0*3.141592/180;        //convertir a rad rotacion en y
-
-    x2 =  cos(angr) + 80*sin(angr); //rotar la camara
-    y2 = -sin(angr) + 80*cos(angr); //con matriz de rotacion
-
-    gluLookAt(x2,150,y2+100,       // posicion de camara
-              0,0,0,              // Hacia donde ve (objetivo)
+    
+    gluLookAt(8,150,220,       // posicion de camara
+              8,0,0,              // Hacia donde ve (objetivo)
               0,1,0);               // Eje de rotacion
-
 
 
     
@@ -344,7 +344,12 @@ void display(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glColor4f(1.0, 1.0, 1.0, 0.6);
     drawFloor();
-    
+
+    /*glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glColor4f(1.0, 1.0, 1.0, 0.6);
+    drawFloor2();
+    */
     
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
@@ -452,19 +457,19 @@ key(unsigned char c, int x, int y)
         exit(0);
     }
     if(gameOver!=1){
-        if (c == 'd' && xobj1<=52.0) {
+        if (c == 'd' && xobj1<=derecha) {
             checarColisiones(1,0);
             // angle=angle-5;
         }
-        if (c == 'a' && xobj1>=-52.0) {
+        if (c == 'a' && xobj1>=izquierda) {
             // angle=angle+5;
             checarColisiones(-1,0);
         }
-        if (c == 's' && yobj1<=61.0) {
+        if (c == 's' && yobj1<=abajo) {
             checarColisiones(0,1);                   //revisar colision conra movil
 
         }
-        if (c == 'w' && yobj1>=-54.0) {
+        if (c == 'w' && yobj1>=arriba) {
             checarColisiones(0,-1);                   //revisar colision conra movil
 
         }
@@ -478,15 +483,15 @@ void spkey(int key,int x, int y){
     if(gameOver!=1){
         switch(key){
             case GLUT_KEY_UP:
-                if (yobj2>=-54.0)checarColisiones2(0,-1);
+                if (yobj2>=arriba)checarColisiones2(0,-1);
                 break;
             case GLUT_KEY_DOWN:
-                if (yobj2<=61.0)checarColisiones2(0,1);
+                if (yobj2<=abajo)checarColisiones2(0,1);
                 break;
             case GLUT_KEY_LEFT:
-                if (xobj2>=-52.0)checarColisiones2(-1,0);            break;
+                if (xobj2>=izquierda)checarColisiones2(-1,0);            break;
             case GLUT_KEY_RIGHT:
-                 if (xobj2<=52.0)checarColisiones2(1,0);
+                 if (xobj2<=derecha)checarColisiones2(1,0);
                 break;
         }
         glutPostRedisplay();
