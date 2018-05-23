@@ -22,6 +22,8 @@ float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,
 float xobj2=59,yobj2=-56,xpant2=0,ypant2=0;
 
 int colored[16][16];
+int gameOver = 0;
+float time = 60;
 
 int posxmat1 = 0, posymat1 = 15;
 int posxmat2 = 15, posymat2 = 0;
@@ -314,10 +316,22 @@ void mover(int x, int y)
         glutPostRedisplay();
     }
 }
-void idle(void)
-{
-    if (caer==1){t=t+0.05; down=-9.81*t*t; glutPostRedisplay();}
-    // printf("%f\r",fall);
+
+void temp(int value){
+    switch (value) {
+        case 1:
+            if(time == 0){
+                gameOver = 1;
+            }else{
+                time --;
+                glutTimerFunc(1000, temp, 1);
+            }
+            break;
+        case 2:
+            
+        default:
+            break;
+    }
 }
 
 static void
@@ -326,44 +340,48 @@ key(unsigned char c, int x, int y)
     if (c == 27) {
         exit(0);
     }
-    if (c == 'd' && xobj1<=52.0) {
-        checarColisiones(1,0);
-        // angle=angle-5;
-    }
-    if (c == 'a' && xobj1>=-52.0) {
-        // angle=angle+5;
-        checarColisiones(-1,0);
-    }
-    if (c == 's' && yobj1<=61.0) {
-        checarColisiones(0,1);                   //revisar colision conra movil
+    if(gameOver!=1){
+        if (c == 'd' && xobj1<=52.0) {
+            checarColisiones(1,0);
+            // angle=angle-5;
+        }
+        if (c == 'a' && xobj1>=-52.0) {
+            // angle=angle+5;
+            checarColisiones(-1,0);
+        }
+        if (c == 's' && yobj1<=61.0) {
+            checarColisiones(0,1);                   //revisar colision conra movil
 
-    }
-    if (c == 'w' && yobj1>=-54.0) {
-        checarColisiones(0,-1);                   //revisar colision conra movil
+        }
+        if (c == 'w' && yobj1>=-54.0) {
+            checarColisiones(0,-1);                   //revisar colision conra movil
 
+        }
+        if (c == 'r') {
+            xmov=0;ymov=0;down=tamanio,caer=0;
+        }
+        glutPostRedisplay();
     }
-    if (c == 'r') {
-        xmov=0;ymov=0;down=tamanio,caer=0;
-    }
-    glutPostRedisplay();
 }
 void spkey(int key,int x, int y){
-    switch(key){
-        case GLUT_KEY_UP:
-            if (yobj2>=-54.0)checarColisiones2(0,-1);
-            break;
-        case GLUT_KEY_DOWN:
-            if (yobj2<=61.0)checarColisiones2(0,1);
-            break;
-        case GLUT_KEY_LEFT:
-            if (xobj2>=-52.0)checarColisiones2(-1,0);            break;
-        case GLUT_KEY_RIGHT:
-             if (xobj2<=52.0)checarColisiones2(1,0);
-            break;
+    if(gameOver!=1){
+        switch(key){
+            case GLUT_KEY_UP:
+                if (yobj2>=-54.0)checarColisiones2(0,-1);
+                break;
+            case GLUT_KEY_DOWN:
+                if (yobj2<=61.0)checarColisiones2(0,1);
+                break;
+            case GLUT_KEY_LEFT:
+                if (xobj2>=-52.0)checarColisiones2(-1,0);            break;
+            case GLUT_KEY_RIGHT:
+                 if (xobj2<=52.0)checarColisiones2(1,0);
+                break;
+        }
+        glutPostRedisplay();
     }
-    glutPostRedisplay();
-
 }
+
 void init(void){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -397,7 +415,7 @@ int main(int argc, char **argv)
     glutDisplayFunc(display);
     glutMouseFunc(mouse);
     glutMotionFunc(mover);
-    glutIdleFunc(idle);
+    glutTimerFunc(1000, temp, 1);
     glutKeyboardFunc(key);
     glutSpecialFunc(spkey);
     init();
