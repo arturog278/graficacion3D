@@ -12,12 +12,27 @@ static float rotar=0;
 GLfloat angle = 0;
 GLfloat angle2 = 0;
 int moving, startx, starty,caer=0;
-int transx =0,transy=0;
+int transx =0,transy=0,vacio=0,azul=0,rojo=0;
 static GLdouble tamanio = 6.0;
 static GLfloat posicionLuz[6];
 float c=1;
-float xobj=-59,yobj=62,xpant=0,ypant=0,x2=0,y2=0,angr,paso=2.622222222;  //variables camara y objetivo
-float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,t=0;             //objeto colision
+float xobj1=-59,yobj1=62,xpant1=0,ypant1=0,x2=0,y2=0,angr,paso=2.622222222;  //variables camara y objetivo
+float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,t=0;//objeto colision
+
+float xobj2=59,yobj2=-56,xpant2=0,ypant2=0;
+
+int colored[16][16];
+
+int posxmat1 = 0, posymat1 = 15;
+int posxmat2 = 15, posymat2 = 0;
+
+void initMatriz(){
+    for(int i=0;i<16;i++){
+        for(int y=0;y<16;y++){
+            colored[i][y]=0;
+        }
+    }
+}
 
 
 char *textura[] = {
@@ -39,7 +54,7 @@ char *textura[] = {
     "oooooooooooooooo",
 };
 
-void texturaPiso(void)
+void texturaPiso(int num)
 {
     GLubyte imagenRGB[16][16][3];
     GLubyte *col;
@@ -49,9 +64,9 @@ void texturaPiso(void)
     for (t = 0; t < 16; t++) {
         for (s = 0; s < 16; s++) {
             if (textura[t][s] == 'x') {
-                col[0] = 128;
-                col[1] = 128;
-                col[2] = 128;
+                col[0] = 256;
+                col[1] = 256;
+                col[2] = 256;
             } else if (textura[t][s] == 'o') {
                 col[0] = 0;
                 col[1] = 0;
@@ -61,16 +76,31 @@ void texturaPiso(void)
                 col[1] = 0;
                 col[2] = 255;
             }else {
-                col[0] =255;
-                col[1] =255;
-                col[2] =255;
+                if(num==1){
+                    col[0] =0;
+                    col[1] =0;
+                    col[2] =255;
+                }else
+                {
+                    if(num==2){
+                    col[0] =255;
+                    col[1] =0;
+                    col[2] =0;
+                }
+                    else{
+                        col[0] =255;
+                        col[1] =255;
+                        col[2] =255;
+                    }
+                }
+
             }
             col += 3;
         }
     }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, 3, 16, 16, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, imagenRGB);
+                GL_RGB, GL_UNSIGNED_BYTE, imagenRGB);
 }
 
 void dibujaObjeto(void)
@@ -91,38 +121,61 @@ void dibujaObjeto(void)
     glutSolidCube(tamanio);
     glPopMatrix();
 }
+void dibujaObjeto2(void)
+{
+    glPushMatrix();
+    glTranslatef(0, 5, 0);
+    
+    GLfloat mat_p_ambient[] = {0.1745,0.01175,0.01175,1};
+    GLfloat mat_p_diffuse[] = {0.61424,0.04136,0.04136,1};
+    GLfloat mat_pspecular[] = {0.727811,0.626959,0.626959,1};
+    GLfloat mat_pshininess[] = {18.2};
+    
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
+    glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
+    glShadeModel(GL_SMOOTH);
+    glutSolidCube(tamanio);
+    glPopMatrix();
+}
 
-static GLfloat verticesPiso[4][3] = {
-    { -64.0, 0.0,  64.0 },
-    {  64.0, 0.0,  64.0 },
-    {  64.0, 0.0, -64.0 },
-    { -64.0, 0.0, -64.0 },
-};
 void drawFloor(void)
 {
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0, 0.0);
-    glVertex3fv(verticesPiso[0]);
-    glTexCoord2f(0.0, 16.0);
-    glVertex3fv(verticesPiso[1]);
-    glTexCoord2f(16.0, 16.0);
-    glVertex3fv(verticesPiso[2]);
-    glTexCoord2f(16.0, 0.0);
-    glVertex3fv(verticesPiso[3]);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-    glEnable(GL_LIGHTING);
+    for(int i=0;i<16;i++){
+        for(int j=0;j<16;j++){
+            if(colored[i][j]==0){
+                texturaPiso(0);
+            }else if(colored[i][j]==1){
+                texturaPiso(1);
+            }else if(colored[i][j]==2){
+                texturaPiso(2);
+            }
+            glDisable(GL_LIGHTING);
+            glEnable(GL_TEXTURE_2D);
+            glBegin(GL_QUADS);
+            glTexCoord2f(0.0, 0.0);
+            glVertex3f(-64+i*8, 0, -64+j*8);
+            glTexCoord2f(0.0, 1.0);
+            glVertex3f(-64+(i+1)*8, 0, -64+j*8);
+            glTexCoord2f(1.0, 1.0);
+            glVertex3f(-64+(i+1)*8, 0, -64+(j+1)*8);
+            glTexCoord2f(1.0, 0.0);
+            glVertex3f(-64+i*8, 0, -64+(j+1)*8);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+            glEnable(GL_LIGHTING);
+        }
+    }
 }
 
 void checarColisiones(int avancex,int avancey){
 
-    xpant=xobj; ypant=yobj;                             //guardo el paso anterior
+    xpant1=xobj1; ypant1=yobj1;                             //guardo el paso anterior
 
-    xobj=xobj+(avancex*paso*3);    //calculo los pasos nuevos
-    yobj=yobj+(avancey*paso*3);
-
+    xobj1=xobj1+(avancex*paso*3);    //calculo los pasos nuevos
+    yobj1=yobj1+(avancey*paso*3);
+/*
     dist=sqrt((xobj-xmov)*(xobj-xmov)+(yobj-ymov)*(yobj-ymov));     //distancia con el obj movil
 
     if(dist<=tamanio*2 && (xmov>xobj || ymov>yobj) && down==tamanio){xmov=xobj+tamanio*2;ymov=yobj+tamanio*2;}
@@ -130,14 +183,65 @@ void checarColisiones(int avancex,int avancey){
     if (xmov>=65 || xmov<=-65 || ymov>=65 || ymov<=-65){caer=1;} //para caer fuera del tablero
     else{caer=0;t=0;}
 
-
-    dist=sqrt((xobj-xfijo)*(xobj-xfijo)+(yobj-yfijo)*(yobj-yfijo));     //dist con el obj fijo
-    if(dist<=tamanio*2){xobj=xpant;yobj=ypant;}         //deteccion col
-
+*/
+    dist=sqrt((xobj1-xobj2)*(xobj1-xobj2)+(yobj1-yobj2)*(yobj1-yobj2));     //dist con el obj fijo
+    if(dist<=tamanio){xobj1=xpant1;yobj1=ypant1;}
+    else{
+        posxmat1+=avancex;
+        posymat1+=avancey;
+        colored[posxmat1][posymat1]=1;
+    }
+    //deteccion col
+/*
 
     dist=sqrt((xobj-xdona)*(xobj-xdona)+(yobj-ydona)*(yobj-ydona));     //dist con el obj a recoger
-    if(dist<=tamanio){xdona=xobj;ydona=yobj;}         //deteccion col
+    if(dist<=tamanio){xdona=xobj;ydona=yobj;}         //deteccion col*/
+}
 
+void checarColisiones2(int avancex,int avancey){
+    
+    xpant2=xobj2; ypant2=yobj2;                             //guardo el paso anterior
+    xobj2=xobj2+(avancex*paso*3);    //calculo los pasos nuevos
+    yobj2=yobj2+(avancey*paso*3);
+    
+    dist=sqrt((xobj2-xobj1)*(xobj2-xobj1)+(yobj2-yobj1)*(yobj2-yobj1));     //dist con el obj fijo
+    if(dist<=tamanio){xobj2=xpant2;yobj2=ypant2;}
+    else{
+        posxmat2+=avancex;
+        posymat2+=avancey;
+        colored[posxmat2][posymat2]=2;
+    }
+
+ /*
+     dist=sqrt((xobj-xmov)*(xobj-xmov)+(yobj-ymov)*(yobj-ymov));     //distancia con el obj movil
+     
+     if(dist<=tamanio*2 && (xmov>xobj || ymov>yobj) && down==tamanio){xmov=xobj+tamanio*2;ymov=yobj+tamanio*2;}
+     if(dist<=tamanio*2 && (xmov<xobj || ymov<yobj) && down==tamanio){xmov=xobj-tamanio*2;ymov=yobj-tamanio*2;}
+     if (xmov>=65 || xmov<=-65 || ymov>=65 || ymov<=-65){caer=1;} //para caer fuera del tablero
+     else{caer=0;t=0;}
+     
+     
+     dist=sqrt((xobj-xfijo)*(xobj-xfijo)+(yobj-yfijo)*(yobj-yfijo));     //dist con el obj fijo
+     if(dist<=tamanio*2){xobj=xpant;yobj=ypant;}         //deteccion col
+     
+     
+     dist=sqrt((xobj-xdona)*(xobj-xdona)+(yobj-ydona)*(yobj-ydona));     //dist con el obj a recoger
+     if(dist<=tamanio){xdona=xobj;ydona=yobj;}
+  */
+ }
+
+
+void puntaje(void){
+    vacio=0;
+    rojo=0;
+    azul=0;
+    for(int i=0;i<16;i++){
+        for(int y=0;y<16;y++){
+            if(colored[i][y]==0)vacio++;
+            if(colored[i][y]==1)azul++;
+            if(colored[i][y]==2)rojo++;
+        }
+    }
 }
 
 void display(void)
@@ -158,51 +262,15 @@ void display(void)
               0,1,0);               // Eje de rotacion
 
     glPushMatrix();
-    glTranslatef(xobj, 0, yobj);    //trasladar objeto
+    glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
     glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
-    dibujaObjeto();             //tetera
+    dibujaObjeto();             //cubo
     glPopMatrix();
-
+    
     glPushMatrix();
-    glTranslatef(xmov,down,ymov);    //trasladar esfera movil
-    glutSolidSphere(tamanio,64,64);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(-30,4,-32);    //trasladar esfera sin colisiones
-    glutSolidSphere(tamanio,64,64);
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(xfijo,tamanio,yfijo);    //trasladar icosaedro fijo
-    glScalef(tamanio, tamanio, tamanio);
-    glutSolidIcosahedron();
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef(xdona,tamanio,ydona);    // dona
-    glRotatef(90, 1, 0, 0);
-    glutSolidTorus(0.5, tamanio, 32, 32);
-    glPopMatrix();
-
-    glPushMatrix();
-    glDisable(GL_LIGHTING);
-    glColor3f(0, 1, 0);
-    glBegin(GL_LINES);
-    glVertex3f(xobj,tamanio,yobj);
-    glVertex3f(xmov,down,ymov);
-    glEnd();
-    glColor3f(1, 0, 0);
-    glBegin(GL_LINES);
-    glVertex3f(xobj,tamanio,yobj);
-    glVertex3f(xfijo,tamanio,yfijo);
-    glEnd();
-    glColor3f(1, 1, 0);
-    glBegin(GL_LINES);
-    glVertex3f(xobj,tamanio,yobj);
-    glVertex3f(xdona,tamanio,ydona);
-    glEnd();
-    glEnable(GL_LIGHTING);
+    glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
+    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
+    dibujaObjeto2();             //cubo
     glPopMatrix();
 
     glEnable(GL_BLEND);
@@ -215,8 +283,11 @@ void display(void)
 
 
     glutSwapBuffers();
-    printf("Posicion x=%f\n",xobj);
-    printf("Posicion y=%f\n",yobj);
+    puntaje();
+    printf("Posicion x=%d\n",posxmat1);
+    printf("Posicion y=%d\n",posymat1);
+    printf("Puntaje azul=%d\n",azul);
+    printf("Puntaje rojo=%d\n",rojo);
 }
 
 void mouse(int button, int state, int x, int y)
@@ -255,19 +326,19 @@ key(unsigned char c, int x, int y)
     if (c == 27) {
         exit(0);
     }
-    if (c == 'd' && xobj<=52.0) {
+    if (c == 'd' && xobj1<=52.0) {
         checarColisiones(1,0);
         // angle=angle-5;
     }
-    if (c == 'a' && xobj>=-52.0) {
+    if (c == 'a' && xobj1>=-52.0) {
         // angle=angle+5;
         checarColisiones(-1,0);
     }
-    if (c == 's' && yobj<=61.0) {
+    if (c == 's' && yobj1<=61.0) {
         checarColisiones(0,1);                   //revisar colision conra movil
 
     }
-    if (c == 'w' && yobj>=-54.0) {
+    if (c == 'w' && yobj1>=-54.0) {
         checarColisiones(0,-1);                   //revisar colision conra movil
 
     }
@@ -276,7 +347,23 @@ key(unsigned char c, int x, int y)
     }
     glutPostRedisplay();
 }
+void spkey(int key,int x, int y){
+    switch(key){
+        case GLUT_KEY_UP:
+            if (yobj2>=-54.0)checarColisiones2(0,-1);
+            break;
+        case GLUT_KEY_DOWN:
+            if (yobj2<=61.0)checarColisiones2(0,1);
+            break;
+        case GLUT_KEY_LEFT:
+            if (xobj2>=-52.0)checarColisiones2(-1,0);            break;
+        case GLUT_KEY_RIGHT:
+             if (xobj2<=52.0)checarColisiones2(1,0);
+            break;
+    }
+    glutPostRedisplay();
 
+}
 void init(void){
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -293,7 +380,7 @@ void init(void){
     posicionLuz[2] = 0;
     posicionLuz[3] = 0.8;//luz posicional o direccional
     glLightfv(GL_LIGHT0, GL_POSITION, posicionLuz); /*light position. */
-    texturaPiso();
+    texturaPiso(0);
     glClearColor(1, 1, 1, 1);
     glLineWidth(2);
 }
@@ -312,8 +399,10 @@ int main(int argc, char **argv)
     glutMotionFunc(mover);
     glutIdleFunc(idle);
     glutKeyboardFunc(key);
-
+    glutSpecialFunc(spkey);
     init();
+    initMatriz();
+
     glutMainLoop();
     return 0;
 }
