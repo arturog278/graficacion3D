@@ -34,7 +34,7 @@ float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
 
 int colored[18][18];
 int gameOver = 1;
-int time = 30;
+int time = 10;
 int timeInit = 5;
 float izquierda=-50.0,derecha=60.0,arriba=-48.0,abajo=65.0;
 int posxmat1 = 1, posymat1 = 16;
@@ -543,12 +543,13 @@ void temp(int value){
             break;
         case 4:
             //Timer de animacion para texto
-            if (scaleModel!=25) {
+            if (scaleModel!=20) {
                 scaleModel+=0.5;
                 glutTimerFunc(20, temp, 4);
                 glutPostRedisplay();
             }else{
-                scaleModel = 0;
+                //scaleModel = 0;
+                modelID = 0;
                 if(timerInicial==1){
                     glutTimerFunc(0, temp, 1);
                 }
@@ -586,15 +587,17 @@ key(unsigned char c, int x, int y)
         glutPostRedisplay();
     }else if(gameOver==1){
         if (c == 'r') {
-            xmov=0;ymov=0;down=tamanio,caer=0;
+            xmov=0;ymov=0;
             xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0;
             xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
            // gameOver = 0;
-            time = 60;
+            time = 10;
             posxmat1 = 1, posymat1 = 16;
             posxmat2 = 16, posymat2 = 1;
             initMatriz();
-            glutTimerFunc(1000, temp, 1);
+           // glutTimerFunc(1000, temp, 1);
+            timeInit=5;
+            timerInicial = 1;
         }else if (c == 'p'){
             gameOver = 2;
             glutTimerFunc(0, temp, 3);
@@ -604,7 +607,7 @@ key(unsigned char c, int x, int y)
     }
 }
 void spkey(int key,int x, int y){
-    if(gameOver!=1){
+    if(gameOver==0){
         switch(key){
             case GLUT_KEY_UP:
                 if (yobj2>=arriba)checarColisiones2(0,-1);
