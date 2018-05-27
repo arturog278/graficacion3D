@@ -3,10 +3,22 @@
 #include <math.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
+#include "/Users/arturo/Downloads/glm.h"
+#include "/Users/arturo/Downloads/glm.c"
 #else
 #include <windows.h>
 #include <GL/glut.h>
 #endif
+
+GLMmodel* modelInicia;
+GLMmodel* model1;
+GLMmodel* model2;
+GLMmodel* model3;
+GLMmodel* model4;
+GLMmodel* model5;
+GLMmodel* modelFin;
+int modelID = 0;
+int timerInicial = 1;
 
 GLfloat angle = 0;
 GLfloat angle2 = 0;
@@ -21,17 +33,63 @@ float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,
 float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
 
 int colored[18][18];
-int gameOver = 0;
-float time = 60;
+int gameOver = 1;
+int time = 30;
+int timeInit = 5;
 float izquierda=-50.0,derecha=60.0,arriba=-48.0,abajo=65.0;
 int posxmat1 = 1, posymat1 = 16;
 int posxmat2 = 16, posymat2 = 1;
 enum {X, Y, Z, W};
 enum {A, B, C, D};
-
+float scaleModel=0;
 
 static GLfloat planoPiso[4];
 static GLfloat sombraPiso[4][4];
+
+void dibujaModelo(int modelID){
+    glPushMatrix();
+    glRotatef(-90, 1.0, 0.0, 0.0);
+    switch (modelID) {
+        case 1:
+            glmUnitize(model1);
+            glmScale(model1, scaleModel);
+            glmDraw(model1,GLM_MATERIAL);
+            break;
+        case 2:
+            glmUnitize(model2);
+            glmScale(model2, scaleModel);
+            glmDraw(model2,GLM_MATERIAL);
+            break;
+        case 3:
+            glmUnitize(model3);
+            glmScale(model3, scaleModel);
+            glmDraw(model3,GLM_MATERIAL);
+            break;
+        case 4:
+            glmUnitize(model4);
+            glmScale(model4, scaleModel);
+            glmDraw(model4,GLM_MATERIAL);
+            break;
+        case 5:
+            glmUnitize(model5);
+            glmScale(model5, scaleModel);
+            glmDraw(model5,GLM_MATERIAL);
+            break;
+        case 6:
+            glmUnitize(modelInicia);
+            glmScale(modelInicia, scaleModel);
+            glmDraw(modelInicia,GLM_MATERIAL);
+            break;
+        case 7:
+            glmUnitize(modelFin);
+            glmScale(modelFin, scaleModel);
+            glmDraw(modelFin,GLM_MATERIAL);
+            break;
+        default:
+            break;
+    }
+
+}
 
 void initMatriz(){
     for(int i=0;i<18;i++){
@@ -322,7 +380,6 @@ void display(void)
     
     shadowMatrix(sombraPiso, planoPiso, posicionLuz);
 
-
   
     glPushMatrix();
     glRotatef(0/4, 1, 0, 0);  //rotar arriba/abajo con mouse
@@ -377,13 +434,18 @@ void display(void)
     glPushMatrix();
     glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
     glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
-    dibujaObjeto();             //cubo
+    dibujaObjeto();//cub
     glPopMatrix();
     
     glPushMatrix();
     glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
     glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
     dibujaObjeto2();             //cubo
+    glPopMatrix();
+    
+    glPushMatrix();
+    glTranslatef(10, 80, 0);
+    dibujaModelo(modelID);
     glPopMatrix();
     
     glDisable(GL_LIGHTING);
@@ -399,10 +461,10 @@ void display(void)
 
     glutSwapBuffers();
     puntaje();
-    printf("Posicion x=%d\n",posxmat1);
-    printf("Posicion y=%d\n",posymat1);
-    printf("Puntaje azul=%d\n",azul);
-    printf("Puntaje rojo=%d\n",rojo);
+//    printf("Posicion x=%f\n",xobj1);
+//    printf("Posicion y=%f\n",yobj1);
+//    printf("Puntaje azul=%d\n",azul);
+//    printf("Puntaje rojo=%d\n",rojo);
 }
 
 void mouse(int button, int state, int x, int y)
@@ -433,15 +495,66 @@ void mover(int x, int y)
 void temp(int value){
     switch (value) {
         case 1:
-            if(time == 0){
-                gameOver = 1;
-            }else{
+            //Timer de juego
+            printf("Entrando a temp 1\n");
+            printf("Time = %d\n",time);
+            if(time != 0){
+                if(time==5){
+                    timeInit = 5;
+                    timerInicial = 0;
+                    glutTimerFunc(0, temp, 3);
+                }
                 time --;
                 glutTimerFunc(1000, temp, 1);
             }
             break;
         case 2:
-            
+            //Timer de animacion de modelos para numeros
+             printf("Entrando a temp 2\n");
+            printf("ScaleModel = %f\n",scaleModel);
+            if(scaleModel!=5){
+                scaleModel+=0.5;
+                glutTimerFunc(100, temp, 2);
+                glutPostRedisplay();
+            }else{
+                glutTimerFunc(0, temp, 3);
+            }
+            break;
+        case 3:
+            //Timer de 5 segundos
+             printf("Entrando a temp 3\n");
+            printf("timeInit = %d\n",timeInit);
+            if (timeInit!=0) {
+                modelID = timeInit;
+                scaleModel = 0;
+                glutTimerFunc(0, temp, 2);
+                timeInit--;
+            }else{
+                if (timerInicial==1) {
+                    modelID = 6;
+                    gameOver = 0;
+                }else{
+                    modelID = 7;
+                    gameOver = 1;
+                }
+                scaleModel = 0;
+                glutTimerFunc(0, temp, 4);
+            }
+            break;
+        case 4:
+            //Timer de animacion para texto
+            if (scaleModel!=25) {
+                scaleModel+=0.5;
+                glutTimerFunc(20, temp, 4);
+                glutPostRedisplay();
+            }else{
+                scaleModel = 0;
+                if(timerInicial==1){
+                    glutTimerFunc(0, temp, 1);
+                }
+                glutPostRedisplay();
+            }
+            break;
         default:
             break;
     }
@@ -453,7 +566,7 @@ key(unsigned char c, int x, int y)
     if (c == 27) {
         exit(0);
     }
-    if(gameOver!=1){
+    if(gameOver==0){
         if (c == 'd' && xobj1<=derecha) {
             checarColisiones(1,0);
             // angle=angle-5;
@@ -471,17 +584,21 @@ key(unsigned char c, int x, int y)
 
         }
         glutPostRedisplay();
-    }else{
+    }else if(gameOver==1){
         if (c == 'r') {
             xmov=0;ymov=0;down=tamanio,caer=0;
             xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0;
             xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
-            gameOver = 0;
+           // gameOver = 0;
             time = 60;
             posxmat1 = 1, posymat1 = 16;
             posxmat2 = 16, posymat2 = 1;
             initMatriz();
             glutTimerFunc(1000, temp, 1);
+        }else if (c == 'p'){
+            gameOver = 2;
+            glutTimerFunc(0, temp, 3);
+            //glutTimerFunc(100, temp, 2);
         }
         glutPostRedisplay();
     }
@@ -528,6 +645,29 @@ void init(void){
     defPlano(planoPiso, verticesPiso[1], verticesPiso[2], verticesPiso[3]);//Plano para sombra}
 }
 
+void initModels(){
+    model1 = glmReadOBJ("/Users/arturo/Downloads/modelos/n1.obj");
+    glmReadMTL(model1,"n1.mtl");
+
+    model2 = glmReadOBJ("/Users/arturo/Downloads/modelos/n2.obj");
+    glmReadMTL(model2,"n2.mtl");
+    
+    model3 = glmReadOBJ("/Users/arturo/Downloads/modelos/n3.obj");
+    glmReadMTL(model3,"n3.mtl");
+    
+    model4 = glmReadOBJ("/Users/arturo/Downloads/modelos/n4.obj");
+    glmReadMTL(model4,"n4.mtl");
+    
+    model5 = glmReadOBJ("/Users/arturo/Downloads/modelos/n5.obj");
+    glmReadMTL(model5,"n5.mtl");
+    
+    modelInicia = glmReadOBJ("/Users/arturo/Downloads/modelos/Empieza.obj");
+    glmReadMTL(modelInicia,"Empieza.mtl");
+    
+    modelFin = glmReadOBJ("/Users/arturo/Downloads/modelos/fin.obj");
+    glmReadMTL(modelFin,"fin.mtl");
+}
+
 int main(int argc, char **argv)
 {
     glutInit(&argc, argv);
@@ -540,11 +680,13 @@ int main(int argc, char **argv)
     glutDisplayFunc(display);
     glutMouseFunc(mouse);
     glutMotionFunc(mover);
-    glutTimerFunc(1000, temp, 1);
+   // glutTimerFunc(1000, temp, 1);
+   // glutTimerFunc(100, temp, 2);
     glutKeyboardFunc(key);
     glutSpecialFunc(spkey);
     init();
     initMatriz();
+    initModels();
 
     glutMainLoop();
     return 0;
