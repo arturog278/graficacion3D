@@ -21,16 +21,17 @@ int modelID = 0;
 int timerInicial = 1;
 
 int transx =0,transy=0,vacio=0,azul=0,rojo=0;
+int xsorm,ysorm,xsorp,ysorp,magnitud,sorUp=0;
 static GLdouble tamanio = 6.0;
 static GLfloat posicionLuz[6];
-float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,paso=2.622222222;  //variables camara y objetivo
+float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,paso=2.622222222*3;  //variables camara y objetivo
 float dist=0;//objeto colision
 
 float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
 
 int colored[18][18];
 int gameOver = 1;
-int time = 10;
+int time = 40;
 int timeInit = 5;
 float izquierda=-50.0,derecha=60.0,arriba=-48.0,abajo=65.0;
 int posxmat1 = 1, posymat1 = 16;
@@ -41,6 +42,7 @@ float scaleModel=0;
 
 static GLfloat planoPiso[4];
 static GLfloat sombraPiso[4][4];
+
 
 void dibujaModelo(int modelID){
     glPushMatrix();
@@ -87,6 +89,91 @@ void dibujaModelo(int modelID){
 
 }
 
+void generaSorpresa(){
+    xsorm = rand() % 16 + 1;
+    ysorm = rand() % 16 + 1;
+    xsorp = -51.26666+(xsorm-1)*paso;
+    ysorp = -48.26666+(ysorm-1)*paso;
+    magnitud = rand() % 4 + 2;
+    sorUp=1;
+}
+
+void temp(int value){
+    switch (value) {
+        case 1:
+            //Timer de juego
+            printf("Entrando a temp 1\n");
+            printf("Time = %d\n",time);
+            if(time != 0){
+                if(time==5){
+                    timeInit = 5;
+                    timerInicial = 0;
+                    glutTimerFunc(0, temp, 3);
+                }
+                time --;
+                glutTimerFunc(1000, temp, 1);
+            }
+            break;
+        case 2:
+            //Timer de animacion de modelos para numeros
+            printf("Entrando a temp 2\n");
+            printf("ScaleModel = %f\n",scaleModel);
+            if(scaleModel!=5){
+                scaleModel+=0.5;
+                glutTimerFunc(100, temp, 2);
+                glutPostRedisplay();
+            }else{
+                glutTimerFunc(0, temp, 3);
+            }
+            break;
+        case 3:
+            //Timer de 5 segundos
+            printf("Entrando a temp 3\n");
+            printf("timeInit = %d\n",timeInit);
+            if (timeInit!=0) {
+                modelID = timeInit;
+                scaleModel = 0;
+                glutTimerFunc(0, temp, 2);
+                timeInit--;
+            }else{
+                if (timerInicial==1) {
+                    modelID = 6;
+                    gameOver = 0;
+                }else{
+                    modelID = 7;
+                    gameOver = 1;
+                }
+                scaleModel = 0;
+                glutTimerFunc(0, temp, 4);
+            }
+            break;
+        case 4:
+            //Timer de animacion para texto
+            if (scaleModel!=20) {
+                scaleModel+=0.5;
+                glutTimerFunc(20, temp, 4);
+                glutPostRedisplay();
+            }else{
+                //scaleModel = 0;
+                modelID = 0;
+                if(timerInicial==1){
+                    glutTimerFunc(0, temp, 1);
+                    glutTimerFunc(5000, temp, 5);
+                }
+                glutPostRedisplay();
+            }
+            break;
+        case 5:
+        {
+            generaSorpresa();
+            glutPostRedisplay();
+            break;
+        }
+        default:
+            break;
+    }
+}
+
 void initMatriz(){
     for(int i=0;i<18;i++){
         for(int y=0;y<18;y++){
@@ -96,6 +183,23 @@ void initMatriz(){
     colored[1][16]=1;
     colored[16][1]=2;
 }
+
+
+void pintaSorpresa(int player){
+    for(int i = -magnitud ; i<=magnitud ;  i++){
+        for(int j = -magnitud; j<=magnitud;j++){
+            int xpint = xsorm+i;
+            int ypint = ysorm+j;
+            if(xpint>0 && xpint<17 && ypint>0 && ypint<17){
+                colored[xpint][ypint] = player;
+            }
+        }
+    }
+    if(time>=4){
+        glutTimerFunc(3000, temp, 5);
+    }
+}
+
 static GLfloat verticesPiso[4][3] = {
     { -64.0, 0.0,  64.0 },
     {  64.0, 0.0,  64.0 },
@@ -229,7 +333,7 @@ void dibujaObjeto(int mat)
     glTranslatef(0, 5, 0);
 
     switch (mat) {
-        case 1:
+        case 1: //Jugador Azul
         {
              GLfloat mat_p_ambient[] = {0.4725,0.4245,0.8645,1};
              GLfloat mat_p_diffuse[] = {0.34615,0.5143,0.8903,1};
@@ -241,7 +345,7 @@ void dibujaObjeto(int mat)
             glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
             break;
         }
-        case 2:
+        case 2: //Jugador Red
         {
             GLfloat mat_p_ambient[] = {0.1745,0.01175,0.01175,1};
             GLfloat mat_p_diffuse[] = {0.61424,0.04136,0.04136,1};
@@ -254,6 +358,20 @@ void dibujaObjeto(int mat)
             glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
             break;
         }
+        case 3: //Sorpresa
+        {
+            GLfloat mat_p_ambient[] = {0.1745,0.01175,0.01175,1};
+            GLfloat mat_p_diffuse[] = {0.61424,0.04136,0.04136,1};
+            GLfloat mat_pspecular[] = {0.727811,0.626959,0.626959,1};
+            GLfloat mat_pshininess[] = {18.2};
+            
+            glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
+            glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
+            break;
+        }
+            
         default:
             break;
     }
@@ -301,8 +419,8 @@ void checarColisiones(int avancex,int avancey){
 
     xpant1=xobj1; ypant1=yobj1;                             //guardo el paso anterior
 
-    xobj1=xobj1+(avancex*paso*3);    //calculo los pasos nuevos
-    yobj1=yobj1+(avancey*paso*3);
+    xobj1=xobj1+(avancex*paso);    //calculo los pasos nuevos
+    yobj1=yobj1+(avancey*paso);
 /*
     dist=sqrt((xobj-xmov)*(xobj-xmov)+(yobj-ymov)*(yobj-ymov));     //distancia con el obj movil
 
@@ -319,6 +437,12 @@ void checarColisiones(int avancex,int avancey){
         posymat1+=avancey;
         colored[posxmat1][posymat1]=1;
     }
+    
+    dist=sqrt((xobj1-xsorp)*(xobj1-xsorp)+(yobj1-ysorp)*(yobj1-ysorp));     //dist con el obj a recoger
+    if(dist<=tamanio && sorUp){
+        sorUp = 0;
+        pintaSorpresa(1);
+    }
     //deteccion col
 /*
 
@@ -329,8 +453,8 @@ void checarColisiones(int avancex,int avancey){
 void checarColisiones2(int avancex,int avancey){
     
     xpant2=xobj2; ypant2=yobj2;                             //guardo el paso anterior
-    xobj2=xobj2+(avancex*paso*3);    //calculo los pasos nuevos
-    yobj2=yobj2+(avancey*paso*3);
+    xobj2=xobj2+(avancex*paso);    //calculo los pasos nuevos
+    yobj2=yobj2+(avancey*paso);
     
     dist=sqrt((xobj2-xobj1)*(xobj2-xobj1)+(yobj2-yobj1)*(yobj2-yobj1));     //dist con el obj fijo
     if(dist<=tamanio){xobj2=xpant2;yobj2=ypant2;}
@@ -352,10 +476,13 @@ void checarColisiones2(int avancex,int avancey){
      dist=sqrt((xobj-xfijo)*(xobj-xfijo)+(yobj-yfijo)*(yobj-yfijo));     //dist con el obj fijo
      if(dist<=tamanio*2){xobj=xpant;yobj=ypant;}         //deteccion col
      
-     
-     dist=sqrt((xobj-xdona)*(xobj-xdona)+(yobj-ydona)*(yobj-ydona));     //dist con el obj a recoger
-     if(dist<=tamanio){xdona=xobj;ydona=yobj;}
-  */
+     */
+     dist=sqrt((xobj2-xsorp)*(xobj2-xsorp)+(yobj2-ysorp)*(yobj2-ysorp));     //dist con el obj a recoger
+     if(dist<=tamanio && sorUp){
+         sorUp = 0;
+         pintaSorpresa(2);
+     }
+
  }
 
 
@@ -423,6 +550,16 @@ void display(void)
     dibujaObjeto(2);
     glPopMatrix();
     
+    if(sorUp){
+        glPushMatrix();
+        glColor4f(0.0, 0.0, 0.0, 0.2);
+        glMultMatrixf((GLfloat *) sombraPiso);
+        //Sombra
+        glTranslatef(xsorp, 0, ysorp);    //trasladar objeto
+        dibujaObjeto(3);
+        glPopMatrix();
+    }
+    
     
     glDisable(GL_BLEND);
     glEnable(GL_LIGHTING);
@@ -438,6 +575,13 @@ void display(void)
     glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
     dibujaObjeto(2);             //cubo
     glPopMatrix();
+    
+    if(sorUp){
+        glPushMatrix();
+        glTranslatef(xsorp, 0, ysorp);    //trasladar objeto
+        dibujaObjeto(3);             //cubo
+        glPopMatrix();
+    }
     
     glPushMatrix();
     glTranslatef(10, 80, 0);
@@ -461,75 +605,6 @@ void display(void)
 //    printf("Posicion y=%f\n",yobj1);
 //    printf("Puntaje azul=%d\n",azul);
 //    printf("Puntaje rojo=%d\n",rojo);
-}
-
-void temp(int value){
-    switch (value) {
-        case 1:
-            //Timer de juego
-            printf("Entrando a temp 1\n");
-            printf("Time = %d\n",time);
-            if(time != 0){
-                if(time==5){
-                    timeInit = 5;
-                    timerInicial = 0;
-                    glutTimerFunc(0, temp, 3);
-                }
-                time --;
-                glutTimerFunc(1000, temp, 1);
-            }
-            break;
-        case 2:
-            //Timer de animacion de modelos para numeros
-             printf("Entrando a temp 2\n");
-            printf("ScaleModel = %f\n",scaleModel);
-            if(scaleModel!=5){
-                scaleModel+=0.5;
-                glutTimerFunc(100, temp, 2);
-                glutPostRedisplay();
-            }else{
-                glutTimerFunc(0, temp, 3);
-            }
-            break;
-        case 3:
-            //Timer de 5 segundos
-             printf("Entrando a temp 3\n");
-            printf("timeInit = %d\n",timeInit);
-            if (timeInit!=0) {
-                modelID = timeInit;
-                scaleModel = 0;
-                glutTimerFunc(0, temp, 2);
-                timeInit--;
-            }else{
-                if (timerInicial==1) {
-                    modelID = 6;
-                    gameOver = 0;
-                }else{
-                    modelID = 7;
-                    gameOver = 1;
-                }
-                scaleModel = 0;
-                glutTimerFunc(0, temp, 4);
-            }
-            break;
-        case 4:
-            //Timer de animacion para texto
-            if (scaleModel!=20) {
-                scaleModel+=0.5;
-                glutTimerFunc(20, temp, 4);
-                glutPostRedisplay();
-            }else{
-                //scaleModel = 0;
-                modelID = 0;
-                if(timerInicial==1){
-                    glutTimerFunc(0, temp, 1);
-                }
-                glutPostRedisplay();
-            }
-            break;
-        default:
-            break;
-    }
 }
 
 static void
@@ -560,8 +635,9 @@ key(unsigned char c, int x, int y)
         if (c == 'r') {
             xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0;
             xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
+            sorUp = 0;
            // gameOver = 0;
-            time = 10;
+            time = 40;
             posxmat1 = 1, posymat1 = 16;
             posxmat2 = 16, posymat2 = 1;
             initMatriz();
