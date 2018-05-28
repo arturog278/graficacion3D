@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <GL/glut.h>
 #endif
+#define TIEMPO_MAX 10
 
 GLMmodel* modelInicia;
 GLMmodel* model1;
@@ -17,11 +18,15 @@ GLMmodel* model3;
 GLMmodel* model4;
 GLMmodel* model5;
 GLMmodel* modelFin;
+GLMmodel* modelVAzul;
+GLMmodel* modelVRojo;
+GLMmodel* modelEmpate;
 int modelID = 0;
 int timerInicial = 1;
+int showWinner = 1;
 
 int transx =0,transy=0,vacio=0,azul=0,rojo=0;
-int xsorm,ysorm,xsorp,ysorp,magnitud,sorUp=0;
+int xsorm,ysorm,xsorp,ysorp,magnitud,sorUp=0,sorColor;
 static GLdouble tamanio = 6.0;
 static GLfloat posicionLuz[6];
 float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,paso=2.622222222*3;  //variables camara y objetivo
@@ -31,7 +36,7 @@ float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
 
 int colored[18][18];
 int gameOver = 1;
-int time = 40;
+int timexD = TIEMPO_MAX;
 int timeInit = 5;
 float izquierda=-50.0,derecha=60.0,arriba=-48.0,abajo=65.0;
 int posxmat1 = 1, posymat1 = 16;
@@ -83,6 +88,21 @@ void dibujaModelo(int modelID){
             glmScale(modelFin, scaleModel);
             glmDraw(modelFin,GLM_MATERIAL);
             break;
+        case 8:
+            glmUnitize(modelVAzul);
+            glmScale(modelVAzul, scaleModel);
+            glmDraw(modelVAzul,GLM_MATERIAL);
+            break;
+        case 9:
+            glmUnitize(modelVRojo);
+            glmScale(modelVRojo, scaleModel);
+            glmDraw(modelVRojo,GLM_MATERIAL);
+            break;
+        case 10:
+            glmUnitize(modelEmpate);
+            glmScale(modelEmpate, scaleModel);
+            glmDraw(modelEmpate,GLM_MATERIAL);
+            break;
         default:
             break;
     }
@@ -94,7 +114,8 @@ void generaSorpresa(){
     ysorm = rand() % 16 + 1;
     xsorp = -51.26666+(xsorm-1)*paso;
     ysorp = -48.26666+(ysorm-1)*paso;
-    magnitud = rand() % 4 + 2;
+    magnitud = rand() % 3 + 2;
+    sorColor = rand() % 3 + 3;
     sorUp=1;
 }
 
@@ -110,19 +131,34 @@ void pintaSorpresa(int player){
     }
 }
 
+void puntaje(void){
+    vacio=0;
+    rojo=0;
+    azul=0;
+    for(int i=0;i<18;i++){
+        for(int y=0;y<18;y++){
+            if(colored[i][y]==0)vacio++;
+            if(colored[i][y]==1)azul++;
+            if(colored[i][y]==2)rojo++;
+        }
+    }
+    printf("Puntaje azul=%d\n",azul);
+    printf("Puntaje rojo=%d\n",rojo);
+}
+
 void temp(int value){
     switch (value) {
         case 1:
             //Timer de juego
             printf("Entrando a temp 1\n");
-            printf("Time = %d\n",time);
-            if(time != 0){
-                if(time==5){
+            printf("Time = %d\n",timexD);
+            if(timexD != 0){
+                if(timexD==5){
                     timeInit = 5;
                     timerInicial = 0;
                     glutTimerFunc(0, temp, 3);
                 }
-                time --;
+                timexD --;
                 glutTimerFunc(1000, temp, 1);
             }
             break;
@@ -153,7 +189,6 @@ void temp(int value){
                     gameOver = 0;
                 }else{
                     modelID = 7;
-                    gameOver = 1;
                 }
                 scaleModel = 0;
                 glutTimerFunc(0, temp, 4);
@@ -161,6 +196,7 @@ void temp(int value){
             break;
         case 4:
             //Timer de animacion para texto
+            printf("Entrando a temp 4 modelID: %d\n",modelID);
             if (scaleModel!=20) {
                 scaleModel+=0.5;
                 glutTimerFunc(20, temp, 4);
@@ -171,6 +207,22 @@ void temp(int value){
                 if(timerInicial==1){
                     glutTimerFunc(0, temp, 1);
                     glutTimerFunc(5000, temp, 5);
+                    glutTimerFunc(5000, temp, 6);
+                }else{
+                    gameOver = 1;
+                    if(showWinner){
+                        puntaje();
+                        scaleModel = 0.5;
+                        if(azul>rojo){
+                            modelID = 8;
+                        }else if(rojo>azul){
+                            modelID = 9;
+                        }else if(rojo==azul){
+                            modelID = 10;
+                        }
+                        showWinner = 0;
+                        glutTimerFunc(0, temp, 4);
+                    }
                 }
                 glutPostRedisplay();
             }
@@ -181,13 +233,22 @@ void temp(int value){
                 pintaSorpresa(0);
                 sorUp = 0;
             }
-            if(time>=5){
+            if(timexD>=5){
                 generaSorpresa();
                 glutTimerFunc(5000, temp, 5);
             }
             glutPostRedisplay();
             break;
         }
+        case 6:
+        {
+            sorColor= rand() % 5+1;
+            glutPostRedisplay();
+            if(timexD!=0){
+                glutTimerFunc(100, temp, 6);
+            }
+        }
+        break;
         default:
             break;
     }
@@ -374,7 +435,34 @@ void dibujaObjeto(int mat,int shape)
             glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
             break;
         }
+        case 4: //Sorpresa
+        {
+            GLfloat mat_p_ambient[] = {0.1,    0.18725,    0.1745,1};
+            GLfloat mat_p_diffuse[] = {0.396,    0.74151,    0.69102,1};
+            GLfloat mat_pspecular[]{0.297254    ,0.30829    ,0.306678,1};
+            GLfloat mat_pshininess[] = {18.2};
             
+            glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
+            glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
+            break;
+            
+        }
+        case 5:
+        {
+            GLfloat mat_p_ambient[] = {0.24725   , 0.1995   , 0.0745,1};
+            GLfloat mat_p_diffuse[] = {            0.75164   , 0.60648  ,  0.22648,1};
+            GLfloat mat_pspecular[]{0.628281 ,   0.555802 ,   0.366065,1};
+            GLfloat mat_pshininess[] = {18.2};
+            
+            glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
+            glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
+            break;
+
+        }
         default:
             break;
     }
@@ -498,29 +586,12 @@ void checarColisiones2(int avancex,int avancey){
 
  }
 
-
-void puntaje(void){
-    vacio=0;
-    rojo=0;
-    azul=0;
-    for(int i=0;i<18;i++){
-        for(int y=0;y<18;y++){
-            if(colored[i][y]==0)vacio++;
-            if(colored[i][y]==1)azul++;
-            if(colored[i][y]==2)rojo++;
-        }
-    }
-}
-
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     
-
-    
     shadowMatrix(sombraPiso, planoPiso, posicionLuz);
 
-  
     glPushMatrix();
     glRotatef(0/4, 1, 0, 0);  //rotar arriba/abajo con mouse
     
@@ -573,7 +644,6 @@ void display(void)
         glPopMatrix();
     }
     
-    
     glDisable(GL_BLEND);
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
@@ -589,17 +659,18 @@ void display(void)
     dibujaObjeto(2,0);             //cubo
     glPopMatrix();
     
-    if(sorUp){
-        glPushMatrix();
-        glTranslatef(xsorp, 0, ysorp);    //trasladar objeto
-        dibujaObjeto(3,2);             //cubo
-        glPopMatrix();
-    }
-    
     glPushMatrix();
     glTranslatef(10, 80, 0);
     dibujaModelo(modelID);
     glPopMatrix();
+    glPopMatrix();
+    
+    if(sorUp){
+        glPushMatrix();
+        glTranslatef(xsorp, 0, ysorp);    //trasladar objeto
+        dibujaObjeto(sorColor,2);             //cubo
+        glPopMatrix();
+    }
     
     glDisable(GL_LIGHTING);
     glColor3f(1.0, 1.0, 0.7);
@@ -608,16 +679,12 @@ void display(void)
     
     glPopMatrix();
     
-
     glPopMatrix();
 
-
     glutSwapBuffers();
-    puntaje();
 //    printf("Posicion x=%f\n",xobj1);
 //    printf("Posicion y=%f\n",yobj1);
-//    printf("Puntaje azul=%d\n",azul);
-//    printf("Puntaje rojo=%d\n",rojo);
+//
 }
 
 static void
@@ -650,14 +717,15 @@ key(unsigned char c, int x, int y)
             xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
             sorUp = 0;
            // gameOver = 0;
-            time = 40;
+            timexD = TIEMPO_MAX;
             posxmat1 = 1, posymat1 = 16;
             posxmat2 = 16, posymat2 = 1;
             initMatriz();
            // glutTimerFunc(1000, temp, 1);
             timeInit=5;
             timerInicial = 1;
-        }else if (c == 'p' && time!=0){
+            showWinner = 1;
+        }else if (c == 'p' && timexD!=0){
             gameOver = 2;
             glutTimerFunc(0, temp, 3);
             //glutTimerFunc(100, temp, 2);
@@ -728,6 +796,15 @@ void initModels(){
     
     modelFin = glmReadOBJ("/Users/arturo/Downloads/modelos/fin.obj");
     glmReadMTL(modelFin,"fin.mtl");
+    
+    modelVAzul = glmReadOBJ("/Users/arturo/Downloads/modelos/VictoriaAzul.obj");
+    glmReadMTL(modelVAzul,"VictoriaAzul.mtl");
+    
+    modelVRojo = glmReadOBJ("/Users/arturo/Downloads/modelos/VictoriaRojo.obj");
+    glmReadMTL(modelVRojo,"VictoriaRojo.mtl");
+    
+    modelEmpate = glmReadOBJ("/Users/arturo/Downloads/modelos/Empate.obj");
+    glmReadMTL(modelEmpate,"Empate.mtl");
 }
 
 int main(int argc, char **argv)
