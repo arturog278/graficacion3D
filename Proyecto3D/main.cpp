@@ -98,6 +98,18 @@ void generaSorpresa(){
     sorUp=1;
 }
 
+void pintaSorpresa(int player){
+    for(int i = -magnitud ; i<=magnitud ;  i++){
+        for(int j = -magnitud; j<=magnitud;j++){
+            int xpint = xsorm+i;
+            int ypint = ysorm+j;
+            if(xpint>0 && xpint<17 && ypint>0 && ypint<17){
+                colored[xpint][ypint] = player;
+            }
+        }
+    }
+}
+
 void temp(int value){
     switch (value) {
         case 1:
@@ -165,7 +177,14 @@ void temp(int value){
             break;
         case 5:
         {
-            generaSorpresa();
+            if(sorUp){
+                pintaSorpresa(0);
+                sorUp = 0;
+            }
+            if(time>=5){
+                generaSorpresa();
+                glutTimerFunc(5000, temp, 5);
+            }
             glutPostRedisplay();
             break;
         }
@@ -182,22 +201,6 @@ void initMatriz(){
     }
     colored[1][16]=1;
     colored[16][1]=2;
-}
-
-
-void pintaSorpresa(int player){
-    for(int i = -magnitud ; i<=magnitud ;  i++){
-        for(int j = -magnitud; j<=magnitud;j++){
-            int xpint = xsorm+i;
-            int ypint = ysorm+j;
-            if(xpint>0 && xpint<17 && ypint>0 && ypint<17){
-                colored[xpint][ypint] = player;
-            }
-        }
-    }
-    if(time>=4){
-        glutTimerFunc(3000, temp, 5);
-    }
 }
 
 static GLfloat verticesPiso[4][3] = {
@@ -327,7 +330,7 @@ void texturaPiso(int num)
                 GL_RGB, GL_UNSIGNED_BYTE, imagenRGB);
 }
 
-void dibujaObjeto(int mat)
+void dibujaObjeto(int mat,int shape)
 {
     glPushMatrix();
     glTranslatef(0, 5, 0);
@@ -360,9 +363,9 @@ void dibujaObjeto(int mat)
         }
         case 3: //Sorpresa
         {
-            GLfloat mat_p_ambient[] = {0.1745,0.01175,0.01175,1};
-            GLfloat mat_p_diffuse[] = {0.61424,0.04136,0.04136,1};
-            GLfloat mat_pspecular[] = {0.727811,0.626959,0.626959,1};
+            GLfloat mat_p_ambient[] = {0.0215,0.1745,0.0215,1};
+            GLfloat mat_p_diffuse[] = {0.07568,0.61424,0.07568,1};
+            GLfloat mat_pspecular[] = {0.633,0.727811,0.633,1};
             GLfloat mat_pshininess[] = {18.2};
             
             glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
@@ -378,7 +381,17 @@ void dibujaObjeto(int mat)
     
 
     glShadeModel(GL_SMOOTH);
-    glutSolidCube(tamanio);
+    switch (shape) {
+        case 0:
+            glutSolidCube(tamanio);
+            break;
+        case 2:
+            glutSolidSphere(tamanio/2, 16, 16);
+            break;
+        default:
+            break;
+    }
+
     glPopMatrix();
 }
 
@@ -539,7 +552,7 @@ void display(void)
     glMultMatrixf((GLfloat *) sombraPiso);
     //Sombra
     glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
-    dibujaObjeto(1);
+    dibujaObjeto(1,0);
     glPopMatrix();
     
     glPushMatrix();
@@ -547,7 +560,7 @@ void display(void)
     glMultMatrixf((GLfloat *) sombraPiso);
     //Sombra
     glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
-    dibujaObjeto(2);
+    dibujaObjeto(2,0);
     glPopMatrix();
     
     if(sorUp){
@@ -556,7 +569,7 @@ void display(void)
         glMultMatrixf((GLfloat *) sombraPiso);
         //Sombra
         glTranslatef(xsorp, 0, ysorp);    //trasladar objeto
-        dibujaObjeto(3);
+        dibujaObjeto(3,2);
         glPopMatrix();
     }
     
@@ -568,18 +581,18 @@ void display(void)
     //dibujo objeto solito
     glPushMatrix();
     glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
-    dibujaObjeto(1);//cub
+    dibujaObjeto(1,0);//cub
     glPopMatrix();
     
     glPushMatrix();
     glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
-    dibujaObjeto(2);             //cubo
+    dibujaObjeto(2,0);             //cubo
     glPopMatrix();
     
     if(sorUp){
         glPushMatrix();
         glTranslatef(xsorp, 0, ysorp);    //trasladar objeto
-        dibujaObjeto(3);             //cubo
+        dibujaObjeto(3,2);             //cubo
         glPopMatrix();
     }
     
