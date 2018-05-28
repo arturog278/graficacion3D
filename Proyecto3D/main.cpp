@@ -20,15 +20,11 @@ GLMmodel* modelFin;
 int modelID = 0;
 int timerInicial = 1;
 
-GLfloat angle = 0;
-GLfloat angle2 = 0;
-int moving, startx, starty,caer=0;
 int transx =0,transy=0,vacio=0,azul=0,rojo=0;
 static GLdouble tamanio = 6.0;
 static GLfloat posicionLuz[6];
-float c=1;
 float xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0,paso=2.622222222;  //variables camara y objetivo
-float xdona=-30,ydona=30,xfijo=30,yfijo=-30,xmov=30,ymov=30,dist=0,mov=1,down=4,t=0;//objeto colision
+float dist=0;//objeto colision
 
 float xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
 
@@ -227,38 +223,42 @@ void texturaPiso(int num)
                 GL_RGB, GL_UNSIGNED_BYTE, imagenRGB);
 }
 
-void dibujaObjeto(void)
+void dibujaObjeto(int mat)
 {
     glPushMatrix();
     glTranslatef(0, 5, 0);
 
-    GLfloat mat_p_ambient[] = {0.4725,0.4245,0.8645,1};
-    GLfloat mat_p_diffuse[] = {0.34615,0.5143,0.8903,1};
-    GLfloat mat_pspecular[] = {1.797357,1.723991,1.708006,1};
-    GLfloat mat_pshininess[] = {18.2};
+    switch (mat) {
+        case 1:
+        {
+             GLfloat mat_p_ambient[] = {0.4725,0.4245,0.8645,1};
+             GLfloat mat_p_diffuse[] = {0.34615,0.5143,0.8903,1};
+             GLfloat mat_pspecular[] = {1.797357,1.723991,1.708006,1};
+             GLfloat mat_pshininess[] = {18.2};
+            glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
+            glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
+            break;
+        }
+        case 2:
+        {
+            GLfloat mat_p_ambient[] = {0.1745,0.01175,0.01175,1};
+            GLfloat mat_p_diffuse[] = {0.61424,0.04136,0.04136,1};
+            GLfloat mat_pspecular[] = {0.727811,0.626959,0.626959,1};
+            GLfloat mat_pshininess[] = {18.2};
+            
+            glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
+            glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
+            break;
+        }
+        default:
+            break;
+    }
+    
 
-    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
-    glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
-    glShadeModel(GL_SMOOTH);
-    glutSolidCube(tamanio);
-    glPopMatrix();
-}
-void dibujaObjeto2(void)
-{
-    glPushMatrix();
-    glTranslatef(0, 5, 0);
-    
-    GLfloat mat_p_ambient[] = {0.1745,0.01175,0.01175,1};
-    GLfloat mat_p_diffuse[] = {0.61424,0.04136,0.04136,1};
-    GLfloat mat_pspecular[] = {0.727811,0.626959,0.626959,1};
-    GLfloat mat_pshininess[] = {18.2};
-    
-    glMaterialfv(GL_FRONT, GL_SPECULAR, mat_pspecular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, mat_pshininess);
-    glMaterialfv(GL_FRONT, GL_AMBIENT, mat_p_ambient);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_p_diffuse);
     glShadeModel(GL_SMOOTH);
     glutSolidCube(tamanio);
     glPopMatrix();
@@ -412,8 +412,7 @@ void display(void)
     glMultMatrixf((GLfloat *) sombraPiso);
     //Sombra
     glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
-    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
-    dibujaObjeto();
+    dibujaObjeto(1);
     glPopMatrix();
     
     glPushMatrix();
@@ -421,8 +420,7 @@ void display(void)
     glMultMatrixf((GLfloat *) sombraPiso);
     //Sombra
     glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
-    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
-    dibujaObjeto2();
+    dibujaObjeto(2);
     glPopMatrix();
     
     
@@ -433,14 +431,12 @@ void display(void)
     //dibujo objeto solito
     glPushMatrix();
     glTranslatef(xobj1, 0, yobj1);    //trasladar objeto
-    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
-    dibujaObjeto();//cub
+    dibujaObjeto(1);//cub
     glPopMatrix();
     
     glPushMatrix();
     glTranslatef(xobj2, 0, yobj2);    //trasladar objeto
-    glRotatef(angle, 0, 1, 0);  //rotar objeto sobre y
-    dibujaObjeto2();             //cubo
+    dibujaObjeto(2);             //cubo
     glPopMatrix();
     
     glPushMatrix();
@@ -465,31 +461,6 @@ void display(void)
 //    printf("Posicion y=%f\n",yobj1);
 //    printf("Puntaje azul=%d\n",azul);
 //    printf("Puntaje rojo=%d\n",rojo);
-}
-
-void mouse(int button, int state, int x, int y)
-{
-    if (button == GLUT_LEFT_BUTTON) {
-        if (state == GLUT_DOWN) {
-            moving = 1;
-            startx = x;
-            starty = y;
-        }
-        if (state == GLUT_UP) {
-            moving = 0;
-        }
-    }
-}
-
-void mover(int x, int y)
-{
-    if (moving) {
-        angle = angle + (x - startx);
-        // angle2 = angle2 + (y - starty);
-        startx = x;
-        // starty = y;
-        glutPostRedisplay();
-    }
 }
 
 void temp(int value){
@@ -587,7 +558,6 @@ key(unsigned char c, int x, int y)
         glutPostRedisplay();
     }else if(gameOver==1){
         if (c == 'r') {
-            xmov=0;ymov=0;
             xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0;
             xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
            // gameOver = 0;
@@ -598,7 +568,7 @@ key(unsigned char c, int x, int y)
            // glutTimerFunc(1000, temp, 1);
             timeInit=5;
             timerInicial = 1;
-        }else if (c == 'p'){
+        }else if (c == 'p' && time!=0){
             gameOver = 2;
             glutTimerFunc(0, temp, 3);
             //glutTimerFunc(100, temp, 2);
@@ -681,10 +651,6 @@ int main(int argc, char **argv)
     glutCreateWindow("CAMARA Y COLISION");
 
     glutDisplayFunc(display);
-    glutMouseFunc(mouse);
-    glutMotionFunc(mover);
-   // glutTimerFunc(1000, temp, 1);
-   // glutTimerFunc(100, temp, 2);
     glutKeyboardFunc(key);
     glutSpecialFunc(spkey);
     init();
