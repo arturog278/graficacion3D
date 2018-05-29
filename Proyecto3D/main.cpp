@@ -9,7 +9,8 @@
 #include <windows.h>
 #include <GL/glut.h>
 #endif
-#define TIEMPO_MAX 10
+#define TIEMPO_MAX 40
+#define PI 3.14159265
 
 GLMmodel* modelInicia;
 GLMmodel* model1;
@@ -24,6 +25,9 @@ GLMmodel* modelEmpate;
 int modelID = 0;
 int timerInicial = 1;
 int showWinner = 1;
+float xcam = 8;
+float zcam = 220;
+float tetha = 0;
 
 int transx =0,transy=0,vacio=0,azul=0,rojo=0;
 int xsorm,ysorm,xsorp,ysorp,magnitud,sorUp=0,sorColor;
@@ -209,7 +213,8 @@ void temp(int value){
                     glutTimerFunc(5000, temp, 5);
                     glutTimerFunc(5000, temp, 6);
                 }else{
-                    gameOver = 1;
+                    glutTimerFunc(0, temp, 7);
+                    gameOver = 2;
                     if(showWinner){
                         puntaje();
                         scaleModel = 0.5;
@@ -246,6 +251,19 @@ void temp(int value){
             glutPostRedisplay();
             if(timexD!=0){
                 glutTimerFunc(100, temp, 6);
+            }
+        }
+            break;
+        case 7:
+        {
+            if(tetha<=360){
+                tetha++;
+                glutTimerFunc(3, temp, 7);
+                xcam = 220.14*sin(tetha*PI/180);
+                zcam = 220.14*cos(tetha*PI/180);
+                glutPostRedisplay();
+            }else{
+                gameOver = 1;
             }
         }
         break;
@@ -595,7 +613,7 @@ void display(void)
     glPushMatrix();
     glRotatef(0/4, 1, 0, 0);  //rotar arriba/abajo con mouse
     
-    gluLookAt(8,150,220,       // posicion de camara
+    gluLookAt(xcam,150,zcam,       // posicion de camara
               8,0,0,              // Hacia donde ve (objetivo)
               0,1,0);               // Eje de rotacion
 
@@ -715,6 +733,9 @@ key(unsigned char c, int x, int y)
         if (c == 'r') {
             xobj1=-51.26666,yobj1=69.73333,xpant1=0,ypant1=0;
             xobj2=66.73333,yobj2=-48.2666,xpant2=0,ypant2=0;
+            xcam = 8;
+            zcam = 220;
+            tetha = 0;
             sorUp = 0;
            // gameOver = 0;
             timexD = TIEMPO_MAX;
