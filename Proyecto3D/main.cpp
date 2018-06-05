@@ -835,7 +835,7 @@ int main(int argc, char **argv)
 
     glutInitWindowSize(1024, 800);
 
-    glutCreateWindow("CAMARA Y COLISION");
+    glutCreateWindow("Color War");
 
     glutDisplayFunc(display);
     glutKeyboardFunc(key);
